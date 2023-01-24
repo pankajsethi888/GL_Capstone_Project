@@ -1,0 +1,197 @@
+<?xml version="1.0" encoding="UTF-8"?><sqlb_project><db path="/home/pankaj/Downloads/Retail Analytics" readonly="0" foreign_keys="1" case_sensitive_like="0" temp_store="0" wal_autocheckpoint="1000" synchronous="2"/><attached/><window><main_tabs open="structure browser pragmas query" current="3"/></window><tab_structure><column_width id="0" width="300"/><column_width id="1" width="0"/><column_width id="2" width="114"/><column_width id="3" width="864"/><column_width id="4" width="0"/><expanded_item id="0" parent="1"/><expanded_item id="1" parent="1"/><expanded_item id="2" parent="1"/><expanded_item id="3" parent="1"/></tab_structure><tab_browse><current_table name="4,12:mainPropertyInfo"/><default_encoding codec=""/><browse_table_settings><table schema="main" name="OrderDetails" show_row_id="0" encoding="" plot_x_axis="" unlock_view_pk="_rowid_"><sort/><column_widths><column index="1" value="66"/><column index="2" value="95"/><column index="3" value="87"/><column index="4" value="80"/><column index="5" value="72"/></column_widths><filter_values/><conditional_formats/><row_id_formats/><display_formats/><hidden_columns/><plot_y_axes/><global_filter/></table><table schema="main" name="Products" show_row_id="0" encoding="" plot_x_axis="" unlock_view_pk="_rowid_"><sort/><column_widths><column index="1" value="80"/><column index="2" value="158"/><column index="3" value="133"/><column index="4" value="52"/></column_widths><filter_values/><conditional_formats/><row_id_formats/><display_formats/><hidden_columns/><plot_y_axes/><global_filter/></table><table schema="main" name="PropertyInfo" show_row_id="0" encoding="" plot_x_axis="" unlock_view_pk="_rowid_"><sort/><column_widths><column index="1" value="96"/><column index="2" value="111"/><column index="3" value="124"/></column_widths><filter_values/><conditional_formats/><row_id_formats/><display_formats/><hidden_columns/><plot_y_axes/><global_filter/></table><table schema="main" name="TR_PropertyInfo" show_row_id="0" encoding="" plot_x_axis="" unlock_view_pk="_rowid_"><sort/><column_widths><column index="1" value="96"/><column index="2" value="111"/><column index="3" value="124"/></column_widths><filter_values/><conditional_formats/><row_id_formats/><display_formats/><hidden_columns/><plot_y_axes/><global_filter/></table></browse_table_settings></tab_browse><tab_sql><sql name="SQL 1">-- 1. What is the maximum quantity of any order ID in the data? Also, determine
+-- the number of orders placed which have this maximum quantity.
+SELECT MAX(Quantity) AS Max_Quantity
+FROM OrderDetails;
+
+
+-- 2. Find the number of unique products that are sold.
+SELECT count(DISTINCT ProductID) 
+FROM OrderDetails;
+
+-- 3. List the different types of “Chair” that are sold by using product table
+SELECT * 
+FROM Products 
+WHERE ProductName like &quot;%chair&quot;;
+
+-- 4. What is the average price of each of these chair listed in the output of previous question?
+SELECT avg(price) AS Average_Price
+FROM Products 
+WHERE ProductName like &quot;%chair&quot;;
+
+-- 5. Find the details of the Properties where the state names are more than 10 characters in length?
+SELECT * 
+FROM PropertyInfo 
+WHERE length(PropertyState) &gt; 10;
+
+-- 6. Find the details of the Properties where the second character of the city name is “e”.
+SELECT * 
+FROM PropertyInfo 
+WHERE PropertyCity like &quot;_e%&quot;;
+
+ -- 7. Find the minimum and maximum prices for products in the “Office Supplies” category
+SELECT ProductCategory, min(price) AS MinPrice, max(price) as MaxPrice 
+FROM Products
+WHERE ProductCategory = &quot;Office Supplies&quot;
+GROUP BY ProductCategory;
+
+-- 8. What is the purpose of using GROUP BY in SQL?
+-- Ans. In SQL, the GROUP BY clause is used to group rows in a query result set based on one or more columns. 
+-- It is typically used in conjunction with aggregate functions such as COUNT(), SUM(), AVG(), MIN(), and MAX() 
+-- to calculate summary information for each group of rows.
+-- It's important to note that the GROUP BY clause must always be used in conjunction with an aggregate function,
+-- otherwise the query will return an error.
+-- Here is a example of applying GROUP BY():-
+SELECT ProductCategory, count(*)
+FROM Products
+GROUP BY ProductCategory;
+
+-- 9. List the different states in which sales are made and count how many orders are there in each of the states
+SELECT a.PropertyState, count(*) AS Order_Counts
+FROM PropertyInfo AS a
+INNER JOIN OrderDetails AS b
+ON a.PropertyID = b.PropertyID
+GROUP BY PropertyState
+ORDER BY Order_Counts;
+
+-- 10. Find the average price of items sold in each Product Category and sort it in a decreasing order
+SELECT ProductCategory, round(avg(Price), 2) as Average_Price
+FROM Products
+GROUP BY ProductCategory
+ORDER BY Average_Price DESC;
+
+-- 11. Find the Product Category that sells the least number of products? Something for the management to focus on
+SELECT ProductCategory
+FROM Products
+GROUP BY ProductCategory
+ORDER BY count(*)
+LIMIT 1;
+
+-- 12. What is the difference between a WHERE v/s HAVING clause in SQL? 
+-- Ans. The WHERE and HAVING clauses are both used to filter rows in a SQL query, 
+-- but they are used in different contexts and have some important differences.
+-- The WHERE clause is used to filter rows before the GROUP BY clause and the aggregate functions are applied.
+-- It is used to filter rows based on the values in one or more columns of the table. For example, you might 
+-- use a WHERE clause to filter out rows with a certain value in a particular column, or to filter out rows 
+-- that fall outside a certain date range.
+SELECT ProductCategory, sum(Price) AS TotalPrice
+FROM Products
+WHERE ProductCategory = &quot;Office Supplies&quot;
+GROUP BY ProductCategory;
+
+-- The HAVING clause is used to filter groups after the GROUP BY clause and the aggregate functions are applied.
+-- It is used to filter groups based on the values returned by aggregate functions. For example, you might
+-- use a HAVING clause to filter out groups with a total sum of sales less than a certain value or to filter out
+-- groups with a count of values less than a certain number.
+SELECT ProductCategory, SUM(Price) as TotalPrice
+FROM Products
+GROUP BY ProductCategory
+HAVING SUM(Price) &gt; 1000;
+
+-- In summary, WHERE clause is used to filter rows before the GROUP BY clause and the aggregate functions are applied.
+-- On the other hand, the HAVING clause is used to filter groups after the GROUP BY clause and the aggregate functions are applied.
+
+
+-- 13. Select the Product categories where the average price is more than 25 
+SELECT * 
+FROM (
+		SELECT ProductCategory, round(avg(Price),2) AS Average_Price
+		FROM Products
+		GROUP BY ProductCategory
+	)
+WHERE Average_Price &gt; 25;
+
+-- 14. Find the top 5 products IDs that sold the maximum quantities? 
+SELECT ProductID, sum(Quantity) AS Total_Quantity
+FROM OrderDetails
+GROUP BY ProductID
+ORDER BY Total_Quantity DESC
+LIMIT 5;
+
+-- 15. For the above question, print the product names instead of Product IDs
+SELECT p.ProductName, sum(o.Quantity) AS Total_Quantity
+FROM Products AS p
+INNER JOIN OrderDetails AS o
+ON p.ProductID = o.ProductID
+GROUP BY ProductName
+ORDER BY Total_Quantity DESC
+LIMIT 5;
+
+-- 16. Mention the different types of joins in SQL? Give simple examples of each. Also represent them using Venn diagrams
+-- Ans. There are several types of joins in SQL:
+-- a) Inner Join:
+SELECT OrderDetails.*, Products.*
+FROM OrderDetails
+INNER JOIN Products
+ON OrderDetails.ProductID = Products.ProductID
+LIMIT 6;
+
+-- b) Left Join:
+SELECT OrderDetails.*, Products.*
+FROM OrderDetails
+LEFT JOIN Products
+ON OrderDetails.ProductID = Products.ProductID
+LIMIT 6;
+
+--c) Right Join:
+SELECT OrderDetails.*, Products.*
+FROM Products
+LEFT JOIN OrderDetails
+ON OrderDetails.ProductID = Products.ProductID
+LIMIT 6;	
+
+
+-- d) Full Outer Join:
+SELECT OrderDetails.*, Products.*
+FROM OrderDetails
+LEFT JOIN Products
+ON OrderDetails.ProductID = Products.ProductID
+UNION ALL
+SELECT OrderDetails.*, Products.*
+FROM Products
+LEFT JOIN OrderDetails
+ON OrderDetails.ProductID = Products.ProductID
+WHERE OrderDetails.ProductID IS NULL
+LIMIT 6;
+
+-- 17.Determine the 5 products that give the overall minimum sales?
+SELECT p.ProductName, sum(p.Price * o.Quantity) AS Sales
+FROM OrderDetails AS o
+INNER JOIN Products AS p
+ON o.ProductID = p.ProductID
+GROUP BY p.ProductName
+ORDER BY Sales ASC
+LIMIT 5;
+
+
+-- 18. Repeat the above query for the City of “Orlando”. 
+SELECT t.PropertyCity, p.ProductName, sum(p.Price * o.Quantity) AS Sales
+FROM OrderDetails AS o
+INNER JOIN Products AS p
+ON o.ProductID = p.ProductID
+INNER JOIN PropertyInfo AS t
+ON o.PropertyID = t.PropertyID
+WHERE PropertyCity = &quot;Orlando&quot;
+GROUP BY p.ProductName
+ORDER BY Sales ASC
+LIMIT 5;
+
+-- 19. What is the difference between Drop, Truncate and Delete? Explain with examples.
+-- Ans. 
+-- a) DELETE: DELETE statement is used to delete specific rows from a table based on a WHERE clause.
+DELETE FROM OrderDetails
+WHERE ProductID = 1;
+
+-- b) TRUNCATE: TRUNCATE statement is used to delete all the data from a table, but it does not delete
+--    the table itself or any associated indexes, triggers, or constraints.
+TRUNCATE TABLE OrderDetails;
+
+-- c) DROP: DROP statement is used to delete an entire table or a view. Once a table is dropped, it cannot be recovered.
+DROP TABLE OrderDetails;
+
+
+-- 20. Which are the cities that belong to the same States?
+SELECT PropertyState, group_concat(PropertyCity) AS Cities
+FROM PropertyInfo
+GROUP BY PropertyState
+HAVING COUNT(DISTINCT PropertyCity) &gt; 1;
+</sql><current_tab id="0"/></tab_sql></sqlb_project>
